@@ -1,9 +1,16 @@
+; EXTERNAL DEPENDENCIES
+INCLUDE		Irvine32.inc
+INCLUDELIB	Irvine32.lib
+
+; EXECUTION MODE PARAMETERS
 .386
 .model flat, stdcall
 .stack 4096
-ExitProcess PROTO, dwExitCode:DWORD
-INCLUDE Irvine32.inc
 
+; PROTOTYPES
+ExitProcess PROTO, dwExitCode:DWORD
+
+; DATA SEGMENT
 .data
     ; Arrays declaration
     sbyte_array SBYTE -2, -1, 0, 1, 2
@@ -12,249 +19,194 @@ INCLUDE Irvine32.inc
     dword_array DWORD 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120
     
     ; Strings for display
-    title_msg BYTE "Printing Array Elements", 0Dh, 0Ah, 0
+    title_msg BYTE "Printing Array Elements",0dh,0ah,0
+    sbyte_title BYTE "Showing SBYTE Array Elements",0dh,0ah,0
+    sword_title BYTE "Showing SWORD Array Elements",0dh,0ah,0
+    sdword_title BYTE "Showing SDWORD Array Elements",0dh,0ah,0
+    dword_title BYTE "Showing DWORD Array Elements",0dh,0ah,"Using a loop!!!",0dh,0ah,0
+    first_last_title BYTE "Showing First and Last",0dh,0ah,0
     
-    sbyte_title BYTE "Showing SBYTE Array Elements", 0Dh, 0Ah, 0
-    
-    sword_title BYTE "Showing SWORD Array Elements", 0Dh, 0Ah, 0
-    
-    sdword_title BYTE "Showing SDWORD Array Elements", 0Dh, 0Ah, 0
-    
-    dword_title BYTE "Showing DWORD Array Elements", 0Dh, 0Ah
-                BYTE "Using a loop!!!", 0Dh, 0Ah, 0
-    
-    first_last_title BYTE "Showing First and Last", 0Dh, 0Ah, 0
-    sbyte_first_msg BYTE "sbyte array first: * ", 0
-    sbyte_last_msg BYTE "sbyte array last: * ", 0
-    sword_first_msg BYTE "sword array first: * ", 0
-    sword_last_msg BYTE "sword array last: * ", 0
-    sdword_first_msg BYTE "sdword array first: * ", 0
-    sdword_last_msg BYTE "sdword array last: * ", 0
-    dword_first_msg BYTE "dword array first: * ", 0
-    dword_last_msg BYTE "dword array last: * ", 0
-    asterisk_msg BYTE " *", 0
-    continue_msg BYTE "Press any key to continue...", 0Dh, 0Ah, 0
+    continue_msg BYTE "Press any key to continue...",0
+    asterisk BYTE " *",0
 
+; CODE SEGMENT
 .code
 main PROC
     ; Initial screen
-    mov edx, OFFSET title_msg
+    mov EDX, OFFSET title_msg
     call WriteString
-    call WaitForKey
-    call ClrScr
+    call WaitForAnyKey
+    call ClearScreen
     
     ; Display SBYTE array
     call DisplaySByteArray
-    call WaitForKey
-    call ClrScr
+    call WaitForAnyKey
+    call ClearScreen
     
     ; Display SWORD array
     call DisplaySWordArray
-    call WaitForKey
-    call ClrScr
+    call WaitForAnyKey
+    call ClearScreen
     
     ; Display SDWORD array
     call DisplaySDWordArray
-    call WaitForKey
-    call ClrScr
+    call WaitForAnyKey
+    call ClearScreen
     
     ; Display DWORD array
     call DisplayDWordArray
-    call WaitForKey
-    call ClrScr
+    call WaitForAnyKey
+    call ClearScreen
     
     ; Display First and Last elements
     call DisplayFirstLast
-    call WaitForKey
+    call WaitForAnyKey
     
     INVOKE ExitProcess, 0
 main ENDP
 
-; Procedure to wait for key press
-WaitForKey PROC
-    mov edx, OFFSET continue_msg
+WaitForAnyKey PROC
+    mov EDX, OFFSET continue_msg
     call WriteString
+    call Crlf
     call ReadChar
     ret
-WaitForKey ENDP
+WaitForAnyKey ENDP
 
-; Display SBYTE array with manual offset arithmetic
+ClearScreen PROC
+    mov ECX, 25
+ClearLoop:
+    call Crlf
+    loop ClearLoop
+    ret
+ClearScreen ENDP
+
 DisplaySByteArray PROC
-    mov edx, OFFSET sbyte_title
+    mov EDX, OFFSET sbyte_title
     call WriteString
     
-    ; First element
-    movsx eax, sbyte_array[0]
-    call DisplayNumber
+    ; Manual offsets - SBYTE array
+    movsx EAX, sbyte_array[0]
+    call DisplayFormatted
     
-    ; Second element
-    movsx eax, sbyte_array[1]
-    call DisplayNumber
+    movsx EAX, sbyte_array[1]
+    call DisplayFormatted
     
-    ; Third element
-    movsx eax, sbyte_array[2]
-    call DisplayNumber
+    movsx EAX, sbyte_array[2]
+    call DisplayFormatted
     
-    ; Fourth element
-    movsx eax, sbyte_array[3]
-    call DisplayNumber
+    movsx EAX, sbyte_array[3]
+    call DisplayFormatted
     
-    ; Fifth element
-    movsx eax, sbyte_array[4]
-    call DisplayNumber
-    
+    movsx EAX, sbyte_array[4]
+    call DisplayFormatted
     ret
 DisplaySByteArray ENDP
 
-; Display SWORD array with manual offset arithmetic
 DisplaySWordArray PROC
-    mov edx, OFFSET sword_title
+    mov EDX, OFFSET sword_title
     call WriteString
     
-    ; Elements with manual offset calculation (2 bytes each)
-    movsx eax, sword_array[0]      ; -11
-    call DisplayNumber
-    movsx eax, sword_array[2]      ; -12
-    call DisplayNumber
-    movsx eax, sword_array[4]      ; -13
-    call DisplayNumber
-    movsx eax, sword_array[6]      ; -14
-    call DisplayNumber
-    movsx eax, sword_array[8]      ; -15
-    call DisplayNumber
-    movsx eax, sword_array[10]     ; -16
-    call DisplayNumber
-    movsx eax, sword_array[12]     ; -17
-    call DisplayNumber
-    movsx eax, sword_array[14]     ; -18
-    call DisplayNumber
-    movsx eax, sword_array[16]     ; -19
-    call DisplayNumber
-    movsx eax, sword_array[18]     ; -20
-    call DisplayNumber
-    
+    ; Manual offset arithmetic (2 bytes each)
+    movsx EAX, sword_array[0]    ; -11
+    call DisplayFormatted
+    movsx EAX, sword_array[2]    ; -12
+    call DisplayFormatted
+    movsx EAX, sword_array[4]    ; -13
+    call DisplayFormatted
+    movsx EAX, sword_array[6]    ; -14
+    call DisplayFormatted
+    movsx EAX, sword_array[8]    ; -15
+    call DisplayFormatted
+    movsx EAX, sword_array[10]   ; -16
+    call DisplayFormatted
+    movsx EAX, sword_array[12]   ; -17
+    call DisplayFormatted
+    movsx EAX, sword_array[14]   ; -18
+    call DisplayFormatted
+    movsx EAX, sword_array[16]   ; -19
+    call DisplayFormatted
+    movsx EAX, sword_array[18]   ; -20
+    call DisplayFormatted
     ret
 DisplaySWordArray ENDP
 
-; Display SDWORD array using TYPE keyword
 DisplaySDWordArray PROC
-    mov edx, OFFSET sdword_title
+    mov EDX, OFFSET sdword_title
     call WriteString
     
-    mov esi, 0
-    mov ecx, LENGTHOF sdword_array
-    
+    ; Using TYPE keyword
+    mov ESI, 0
+    mov ECX, LENGTHOF sdword_array
 SDWordLoop:
-    mov eax, sdword_array[esi * TYPE sdword_array]
-    call DisplayNumber
-    inc esi
+    mov EAX, sdword_array[ESI * TYPE sdword_array]
+    call DisplayFormatted
+    inc ESI
     loop SDWordLoop
-    
     ret
 DisplaySDWordArray ENDP
 
-; Display DWORD array using loop and TYPE
 DisplayDWordArray PROC
-    mov edx, OFFSET dword_title
+    mov EDX, OFFSET dword_title
     call WriteString
     
-    mov esi, 0
-    mov ecx, LENGTHOF dword_array
-    
+    ; Using loop and TYPE
+    mov ESI, 0
+    mov ECX, LENGTHOF dword_array
 DWordLoop:
-    mov eax, dword_array[esi * TYPE dword_array]
-    call DisplayNumber
-    inc esi
+    mov EAX, dword_array[ESI * TYPE dword_array]
+    call WriteDec
+    mov EDX, OFFSET asterisk
+    call WriteString
+    call Crlf
+    inc ESI
     loop DWordLoop
-    
     ret
 DisplayDWordArray ENDP
 
-; Display number with asterisk formatting
-DisplayNumber PROC
-    mov edx, OFFSET asterisk_msg
-    call WriteString
-    mov edx, 0
+DisplayFormatted PROC
     call WriteInt
-    mov edx, OFFSET asterisk_msg
+    mov EDX, OFFSET asterisk
     call WriteString
     call Crlf
     ret
-DisplayNumber ENDP
+DisplayFormatted ENDP
 
-; Display first and last elements of all arrays
 DisplayFirstLast PROC
-    mov edx, OFFSET first_last_title
+    mov EDX, OFFSET first_last_title
     call WriteString
     
     ; SBYTE array first and last
-    mov edx, OFFSET sbyte_first_msg
-    call WriteString
-    movsx eax, sbyte_array[0]
+    movsx EAX, sbyte_array[0]
     call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
+    call Crlf
+    movsx EAX, sbyte_array[4]
+    call WriteInt
     call Crlf
     
-    mov edx, OFFSET sbyte_last_msg
-    call WriteString
-    movsx eax, sbyte_array[4]
+    ; SWORD array first and last
+    movsx EAX, sword_array[0]
     call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
+    call Crlf
+    movsx EAX, sword_array[18]
+    call WriteInt
     call Crlf
     
-    ; SWORD array first and last (manual offset from sbyte_array)
-    mov edx, OFFSET sword_first_msg
-    call WriteString
-    movsx eax, SWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array]
+    ; SDWORD array first and last
+    mov EAX, sdword_array[0]
     call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
+    call Crlf
+    mov EAX, sdword_array[19 * TYPE sdword_array]
+    call WriteInt
     call Crlf
     
-    mov edx, OFFSET sword_last_msg
-    call WriteString
-    movsx eax, SWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array + (SIZEOF sword_array - 2)]
-    call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
-    call Crlf
-    
-    ; SDWORD array first and last (manual offset from sbyte_array)
-    mov edx, OFFSET sdword_first_msg
-    call WriteString
-    mov eax, SDWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array + SIZEOF sword_array]
-    call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
-    call Crlf
-    
-    mov edx, OFFSET sdword_last_msg
-    call WriteString
-    mov eax, SDWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array + SIZEOF sword_array + (SIZEOF sdword_array - 4)]
-    call WriteInt
-    mov edx, OFFSET asterisk_msg
-    call WriteString
-    call Crlf
-    
-    ; DWORD array first and last (manual offset from sbyte_array)
-    mov edx, OFFSET dword_first_msg
-    call WriteString
-    mov eax, DWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array + SIZEOF sword_array + SIZEOF sdword_array]
+    ; DWORD array first and last
+    mov EAX, dword_array[0]
     call WriteDec
-    mov edx, OFFSET asterisk_msg
-    call WriteString
     call Crlf
-    
-    mov edx, OFFSET dword_last_msg
-    call WriteString
-    mov eax, DWORD PTR [OFFSET sbyte_array + SIZEOF sbyte_array + SIZEOF sword_array + SIZEOF sdword_array + (SIZEOF dword_array - 4)]
+    mov EAX, dword_array[19 * TYPE dword_array]
     call WriteDec
-    mov edx, OFFSET asterisk_msg
-    call WriteString
     call Crlf
-    
     ret
 DisplayFirstLast ENDP
 
