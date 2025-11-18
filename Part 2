@@ -1,0 +1,136 @@
+; EXTERNAL DEPENDENCIES
+INCLUDE		Irvine32.inc
+INCLUDELIB	Irvine32.lib
+
+; EXECUTION MODE PARAMETERS
+.386
+.model flat, stdcall
+.stack 4096
+
+; PROTOTYPES
+ExitProcess PROTO, dwExitCode:DWORD
+
+; DATA SEGMENT
+.data
+    ; Data declarations - only sequential groups of 1s or 0s allowed
+    all_zeros DWORD 00000000h    ; 32 zeros
+    all_ones  DWORD 0FFFFFFFFh   ; 32 ones
+    low_ones  WORD 0FFFFh        ; 16 ones in lower bits
+
+    ; Strings for display
+    continue_msg BYTE "Press any key to continue...",0
+    hex_label BYTE "Hexadecimal: ",0
+    binary_label BYTE "Binary: ",0
+    space BYTE " ",0
+
+; CODE SEGMENT
+.code
+main PROC
+    ; State 1: EAX = 00000000
+    mov EAX, all_zeros
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    ; State 2: EAX = FFFFFFFF
+    mov EAX, all_ones
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    ; State 3: EAX = 00000000
+    mov EAX, all_zeros
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    ; State 4: EAX = 0000FFFF
+    mov EAX, all_zeros
+    mov AX, low_ones
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    ; State 5: EAX = 0000FF00
+    mov EAX, all_zeros
+    mov AX, 0FF00h
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    ; State 6: EAX = FFFF00FF
+    mov EAX, all_ones
+    and EAX, 0FFFF00FFh
+    call DisplayRegisterState
+    call WaitForAnyKey
+    
+    INVOKE ExitProcess, 0
+main ENDP
+
+WaitForAnyKey PROC
+    mov EDX, OFFSET continue_msg
+    call WriteString
+    call Crlf
+    call ReadChar
+    ret
+WaitForAnyKey ENDP
+
+DisplayRegisterState PROC
+    ; Display register state using DumpRegs
+    call DumpRegs
+    call Crlf
+    
+    ; Display hexadecimal value
+    mov EDX, OFFSET hex_label
+    call WriteString
+    call WriteHex
+    call Crlf
+    
+    ; Display binary value
+    mov EDX, OFFSET binary_label
+    call WriteString
+    call DisplayBinary
+    call Crlf
+    call Crlf
+    
+    ret
+DisplayRegisterState ENDP
+
+DisplayBinary PROC
+    ; Display EAX in binary format (8 groups of 4 bits)
+    push EAX
+    push EBX
+    push ECX
+    push EDX
+    
+    mov EBX, EAX        ; Copy EAX to EBX for processing
+    mov ECX, 32         ; 32 bits to display
+    
+BinaryLoop:
+    ; Display each bit
+    mov AL, '0'         ; Assume bit is 0
+    shl EBX, 1          ; Shift left, MSB goes to carry flag
+    jnc PrintBit        ; If no carry, bit is 0
+    mov AL, '1'         ; Otherwise bit is 1
+    
+PrintBit:
+    call WriteChar      ; Display the bit
+    
+    ; Add space every 4 bits
+    mov EDX, ECX        ; Check current position
+    dec EDX
+    and EDX, 3          ; EDX = (position % 4)
+    jnz NoSpace         ; If not zero, don't add space
+    
+    cmp ECX, 1          ; Don't add space after last bit
+    je NoSpace
+    
+    mov AL, ' '
+    call WriteChar
+    
+NoSpace:
+    loop BinaryLoop
+    
+    pop EDX
+    pop ECX
+    pop EBX
+    pop EAX
+    ret
+DisplayBinary ENDP
+
+END main
