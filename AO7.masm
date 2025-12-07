@@ -1,0 +1,219 @@
+; EXTERNAL DEPENDENCIES
+INCLUDE		Irvine32.inc
+INCLUDELIB	Irvine32.lib
+
+; EXECUTION MODE PARAMETERS
+.386
+.model flat, stdcall
+.stack 4096
+
+; PROTOTYPES
+ExitProcess PROTO, dwExitCode:DWORD
+
+; DATA SEGMENT
+.data
+integer_1			DWORD		10
+integer_2			DWORD		50
+byte_1				BYTE		30
+byte_2				BYTE		70
+intermediate_1		DWORD		0
+intermediate_2		DWORD		0
+intermediate_3		DWORD		0
+
+; Display messages
+msg_int1			BYTE	"The value in 'integer_1' is : ",0
+msg_int2			BYTE	"The value in 'integer_2' is : ",0
+msg_byte1			BYTE	"The value in 'byte_1' is : ",0
+msg_byte2			BYTE	"The value in 'byte_2' is : ",0
+msg_inter1			BYTE	"The value in 'intermediate_1' is : ",0
+msg_inter2			BYTE	"The value in 'intermediate_2' is : ",0
+msg_inter3			BYTE	"The value in 'intermediate_3' is : ",0
+newline				BYTE	0Dh, 0Ah, 0
+
+; CODE SEGMENT
+.code
+main PROC
+	; Show initial values
+	call showOperandContents
+	call Crlf
+	
+	
+	; EXPRESSION 1: -(integer_1 + integer_2)
+	; ============================================
+	; Step 1: Add integer_1 + integer_2
+	mov eax, integer_1
+	add eax, integer_2
+	mov intermediate_1, eax
+	mov intermediate_2, 0
+	mov intermediate_3, 0
+	call showIntermediateContents
+	
+	; Step 2: Negate the result
+	neg intermediate_1
+	call showIntermediateContents
+	
+	
+	; EXPRESSION 2: integer_2 - integer_1 + 2(integer_2)
+	; ============================================
+	; Clear intermediate variables
+	mov intermediate_1, 0
+	mov intermediate_2, 0
+	mov intermediate_3, 0
+	
+	; Step 1: Compute 2(integer_2)
+	mov eax, integer_2
+	add eax, integer_2		; 2 * 50 = 100
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	; Step 2: integer_2 - integer_1
+	mov eax, integer_2
+	sub eax, integer_1		; 50 - 10 = 40
+	mov intermediate_2, eax
+	call showIntermediateContents
+	
+	; Step 3: Add intermediate_1 + intermediate_2
+	mov eax, intermediate_1
+	add eax, intermediate_2	; 100 + 40 = 140
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	
+	; EXPRESSION 3: integer_1 + byte_1 - integer_2
+	; ============================================
+	; Clear intermediate variables
+	mov intermediate_1, 0
+	mov intermediate_2, 0
+	mov intermediate_3, 0
+	
+	; Step 1: integer_1 + byte_1
+	mov eax, integer_1
+	movsx ebx, byte_1		; Sign extend byte to 32 bits
+	add eax, ebx			; 10 + 30 = 40
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	; Step 2: Subtract integer_2
+	sub eax, integer_2		; 40 - 50 = -10
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	
+	; EXPRESSION 4: byte_2 - byte_1 + 2(integer_2 - byte_1)
+	; ============================================
+	; Clear intermediate variables
+	mov intermediate_1, 0
+	mov intermediate_2, 0
+	mov intermediate_3, 0
+	
+	; Step 1: Compute integer_2 - byte_1
+	mov eax, integer_2
+	movsx ebx, byte_1
+	sub eax, ebx			; 50 - 30 = 20
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	; Step 2: Multiply by 2 (2 * intermediate_1)
+	add eax, eax			; 20 + 20 = 40
+	mov intermediate_2, eax
+	call showIntermediateContents
+	
+	; Step 3: byte_2 - byte_1
+	movsx eax, byte_2
+	movsx ebx, byte_1
+	sub eax, ebx			; 70 - 30 = 40
+	mov intermediate_3, eax
+	call showIntermediateContents
+	
+	; Step 4: Add intermediate_2 + intermediate_3
+	mov eax, intermediate_2
+	add eax, intermediate_3	; 40 + 40 = 80
+	mov intermediate_1, eax
+	call showIntermediateContents
+	
+	; Wait for user to see results
+	call Crlf
+	call WaitMsg
+
+	; Return to OS.
+	INVOKE ExitProcess, 0
+main ENDP
+
+
+; PROCEDURE: showOperandContents
+; Displays the values of int 1 and int 2
+; byte1 and byte 2
+
+showOperandContents PROC
+	; Save registers we'll use
+	push eax
+	push edx
+	
+	; Display integer_1
+	mov edx, OFFSET msg_int1
+	call WriteString
+	mov eax, integer_1
+	call WriteInt
+	call Crlf
+	
+	; Display integer_2
+	mov edx, OFFSET msg_int2
+	call WriteString
+	mov eax, integer_2
+	call WriteInt
+	call Crlf
+	
+	; Display byte_1 (sign extended)
+	mov edx, OFFSET msg_byte1
+	call WriteString
+	movsx eax, byte_1		; Sign extend to 32 bits
+	call WriteInt
+	call Crlf
+	
+	; Display byte_2 (sign extended)
+	mov edx, OFFSET msg_byte2
+	call WriteString
+	movsx eax, byte_2		; Sign extend to 32 bits
+	call WriteInt
+	call Crlf
+	
+	; Restore registers
+	pop edx
+	pop eax
+	ret
+showOperandContents ENDP
+
+showIntermediateContents PROC
+	; Save registers we'll use
+	push eax
+	push edx
+	
+	; Display intermediate_1
+	mov edx, OFFSET msg_inter1
+	call WriteString
+	mov eax, intermediate_1
+	call WriteInt
+	call Crlf
+	
+	; Display intermediate_2
+	mov edx, OFFSET msg_inter2
+	call WriteString
+	mov eax, intermediate_2
+	call WriteInt
+	call Crlf
+	
+	; Display intermediate_3
+	mov edx, OFFSET msg_inter3
+	call WriteString
+	mov eax, intermediate_3
+	call WriteInt
+	call Crlf
+	call Crlf	; Extra blank line for readability
+	
+	; Restore registers
+	pop edx
+	pop eax
+	ret
+showIntermediateContents ENDP
+
+END main
